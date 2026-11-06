@@ -73,7 +73,7 @@ export function App() {
   useEyesClosedGate(vision, screen === 'session' && awaitingEyes, beginTimer)
 
   const calibration = useCalibration(vision, screen === 'calibrate')
-  const previewLive = screen === 'home' && vision.status === 'ready'
+  const previewLive = screen === 'home' && vision.streaming
   const observation = useObservation(vision, (screen === 'session' && monitored) || previewLive)
 
   const { setBaseline, start, stop } = vision

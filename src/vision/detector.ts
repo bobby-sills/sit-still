@@ -61,7 +61,15 @@ export class Detector {
           numPoses: 1,
         }),
       ])
-      return new Detector(face, pose)
+      const detector = new Detector(face, pose)
+      try {
+        detector.warmUp()
+      } catch (err) {
+        // A delegate that builds but cannot run is no use; let the next one try.
+        detector.close()
+        throw err
+      }
+      return detector
     }
 
     // GPU first, then CPU, and only then the CDN — older mobile Safari fails the
@@ -81,6 +89,22 @@ export class Detector {
       }
     }
     throw lastError instanceof Error ? lastError : new Error('could not load the vision models')
+  }
+
+  /**
+   * One pass over a blank frame, before any real one. The GPU delegate compiles
+   * its shaders lazily on first inference, which froze the page for seconds
+   * with the feed on screen; done here it lands while the models are loading,
+   * and a delegate that fails at inference rather than at build is caught
+   * inside the fallback chain instead of failing every frame of a sit.
+   */
+  private warmUp(): void {
+    const canvas = document.createElement('canvas')
+    canvas.width = 256
+    canvas.height = 256
+    this.face.detectForVideo(canvas, 0)
+    this.pose.detectForVideo(canvas, 0)
+    this.lastTimestamp = 0
   }
 
   /** Reads one frame. Returns null if the video has no new frame to give. */

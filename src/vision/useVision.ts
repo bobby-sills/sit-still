@@ -9,6 +9,12 @@ import { SignalSmoother, rawVerdict } from './verdict'
 export type VisionStatus =
   | 'idle'
   | 'starting'
+  /**
+   * The feed is live but the models are still loading. Shown as soon as it
+   * exists: hiding a working camera behind ~20MB of downloads and a shader
+   * compile made the feed take seconds to appear.
+   */
+  | 'streaming'
   | 'ready'
   /** The browser has no camera API at all, or no camera attached. */
   | 'unsupported'
@@ -22,6 +28,8 @@ const STALE_GAP_MS = 1000
 
 export type Vision = {
   status: VisionStatus
+  /** A feed is showing, whether or not detection has started on it. */
+  streaming: boolean
   /**
    * The element detection reads from. It is mounted once, for the life of the
    * app, and kept off screen: screens that show no camera panel — the whole
@@ -174,6 +182,7 @@ export function useVision(): Vision {
           element.srcObject = stream
           await element.play().catch(() => undefined)
         }
+        setStatus('streaming')
         detectorRef.current = await Detector.create()
       } catch {
         stream.getTracks().forEach((track) => track.stop())
@@ -211,6 +220,7 @@ export function useVision(): Vision {
 
   return {
     status,
+    streaming: status === 'streaming' || status === 'ready',
     videoRef: attachVideo,
     previewRef: attachPreview,
     observationRef,

@@ -36,7 +36,7 @@ export function Calibrate({
   const panel = (
     <CameraPanel
       videoRef={videoRef}
-      live={status === 'ready'}
+      live={status === 'streaming' || status === 'ready'}
       caption={status === 'starting' ? 'waking the camera' : unavailable ? 'no feed' : 'camera feed'}
       observation={observation}
       showOval={step > 0}
